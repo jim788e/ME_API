@@ -1,6 +1,6 @@
-# Magic Eden Rarity CSV Fetcher
+# Magic Eden Collection Info CSV Fetcher
 
-A Node.js tool to fetch token rarity information from the Magic Eden EVM API for any supported blockchain and export the data to CSV format.
+A Node.js tool to fetch comprehensive collection token data (attributes, rarity, market info) from the Magic Eden EVM API and export it to CSV. Built for large collections with resilient pagination, rate limiting, and partial-result saving.
 
 ## Supported Chains
 
@@ -17,13 +17,14 @@ A Node.js tool to fetch token rarity information from the Magic Eden EVM API for
 
 ## Features
 
-- ✅ Multi-chain support for all major EVM chains
-- ✅ Automatic rate limiting (180 requests/minute)
-- ✅ Pagination handling for large collections
-- ✅ Retry logic for failed requests
-- ✅ Comprehensive error handling
-- ✅ CSV export with timestamped filenames
-- ✅ Detailed progress logging
+- ✅ Multi-chain EVM support (including `sei`)
+- ✅ Automatic rate limiting (180 req/min) with 20% safety buffer
+- ✅ Robust pagination with offsets for large collections (10k+ safe)
+- ✅ Graceful handling of API 400/404/429 with retries and backoff
+- ✅ Partial results saved if limits/errors occur mid-run
+- ✅ CSV export with timestamped filenames in `output/`
+- ✅ Clean logs with page/offset progress
+- ✅ `.gitignore` excludes `output/`, `.env`, `node_modules/`
 
 ## Installation
 
@@ -58,6 +59,10 @@ A Node.js tool to fetch token rarity information from the Magic Eden EVM API for
 - `API_KEY`: Your Magic Eden API key (optional but recommended)
 - `OUTPUT_DIR`: Directory to save CSV files (default: ./output)
 
+Git setup (optional):
+- Main branch tracked at a remote (example) `origin`.
+- `output/` is not synced to the repository.
+
 ## Usage
 
 ### Basic Usage
@@ -80,35 +85,39 @@ The tool generates a CSV file with the following columns:
 - **Name**: Token name
 - **Description**: Token description
 - **Rarity Rank**: Numerical rarity rank (if available)
-- **Rarity Score**: Rarity score (if available)
+- **Rarity Provider**: Rarity provider name (e.g., POPRANK)
 - **Attributes (JSON)**: Token attributes in JSON format
 - **Image URL**: Link to token image
 - **Market Price**: Current listing price
 - **Currency**: Price currency (ETH, etc.)
-- **Last Sale**: Last sale information
+- **Last Sale Price**: Last sale price (native)
+- **Last Sale Currency**: Last sale currency symbol
 - **Owner**: Current owner address
 - **Collection Address**: Contract address
 - **Contract Address**: Token contract address
 - **Chain**: Blockchain network
+- **Standard**: Token standard (e.g., ERC721)
+- **Remaining Supply**: Remaining supply
 
 ## Example Output File
 
 ```
-me-rarity-sei-0x1234567890abcdef-2024-01-15T10-30-45-123Z.csv
+me-rarity-sei-0x1234567890abcdef-2025-01-15T10-30-45-123Z.csv
 ```
 
 ## Rate Limiting
 
-The tool automatically handles Magic Eden's rate limit of 180 requests per minute by:
-- Adding ~370ms delay between requests (with 10% buffer)
-- Using a queue system to prevent burst requests
-- Implementing retry logic for rate limit errors
+The tool automatically handles Magic Eden's limits:
+- Adds ~400ms delay between requests (20% buffer over 180 req/min)
+- Retries on 429 with longer waits
+- Treats some 400 responses at high offsets as end-of-collection
 
 ## Error Handling
 
 - **Invalid collection address**: Clear error message with supported chains
 - **Network failures**: Automatic retry with exponential backoff
-- **Rate limit exceeded**: Automatic retry after delay
+- **Rate limit exceeded**: Automatic retry with extended delay
+- **Large collections**: Partial results are saved on safe exit
 - **Missing environment variables**: Helpful error messages
 
 ## Troubleshooting
@@ -126,8 +135,14 @@ For detailed logging, you can modify the script to add more console output or us
 ## API Reference
 
 This tool uses the Magic Eden EVM API v4:
-- **Endpoint**: `https://api-mainnet.magiceden.dev/v4/assets`
-- **Documentation**: [Magic Eden API Docs](https://docs.magiceden.io/v4.0/reference/getassets)
+- Endpoint: `https://api-mainnet.magiceden.dev/v4/assets`
+- Docs: [Magic Eden v4 Get Assets](https://docs.magiceden.io/v4.0/reference/getassets)
+
+Example query shape used by the tool:
+- `chain`: EVM chain, e.g. `sei`
+- `collectionId`: collection contract address
+- `includeMarket`: `true`
+- `offset`, `limit`: pagination controls
 
 ## License
 
