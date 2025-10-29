@@ -1,0 +1,25 @@
+{
+  "name": "me-rarity-csv-fetcher",
+  "version": "1.0.0",
+  "description": "Fetch token rarity data from Magic Eden API and export to CSV",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "keywords": [
+    "magic-eden",
+    "nft",
+    "rarity",
+    "csv",
+    "api"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.13.1",
+    "csv-writer": "^1.6.0",
+    "dotenv": "^16.6.1"
+  },
+  "type": "commonjs"
+}

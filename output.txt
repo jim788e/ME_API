@@ -1,0 +1,10 @@
+ΏθγΑ Testing Magic Eden API with Token #22
+Contract: 0xcE0FEe0ac17f37CD66642F0EC8a4675Ae7F590dd
+API Key: Set
+
+ΏθΥκ Checking Magic Eden API for Token #22
+API URL: https://api-mainnet.magiceden.dev/v3/rtp/sei/tokens/0xcE0FEe0ac17f37CD66642F0EC8a4675Ae7F590dd%3A22/activity/v5?limit=6&sortBy=eventTimestamp&includeMetadata=true
+Making API request...
+έζΝ Error checking Magic Eden activity: Request failed with status code 400
+Status: 400
+Response data: Not Found.
