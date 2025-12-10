@@ -44,16 +44,23 @@ class MagicEdenRarityFetcher {
 
   async makeRequest(params, retries = 0) {
     try {
+      const requestParams = {
+        chain: this.chain,
+        collectionId: this.collectionAddress,
+        limit: params.limit || '100',
+        sortBy: params.sortBy || 'price',
+        sortDir: params.sortDir || 'asc'
+      };
+      
+      // Add continuation token if provided (cursor-based pagination)
+      if (params.continuation) {
+        requestParams.continuation = params.continuation;
+      }
+      
       const config = {
         method: 'GET',
-        url: `${API_BASE_URL}/assets`,
-        params: {
-          chain: this.chain,
-          collectionId: this.collectionAddress,
-          includeMarket: 'true',
-          offset: params.offset || '0',
-          limit: params.limit || '100'
-        },
+        url: `${API_BASE_URL}/evm-public/assets/collection-assets`,
+        params: requestParams,
         headers: {
           'Accept': '*/*',
           'Content-Type': 'application/json'
@@ -64,7 +71,8 @@ class MagicEdenRarityFetcher {
         config.headers['Authorization'] = `Bearer ${this.apiKey}`;
       }
 
-      console.log(`Making request for offset: ${params.offset}, limit: ${params.limit}`);
+      const pageInfo = params.continuation ? `continuation: ${params.continuation.substring(0, 20)}...` : 'first page';
+      console.log(`Making request (${pageInfo}), limit: ${params.limit}`);
       const response = await axios(config);
       
       // Add delay between requests to respect rate limit
@@ -86,25 +94,36 @@ class MagicEdenRarityFetcher {
     console.log(`Fetching assets for collection: ${this.collectionAddress} on ${this.chain}`);
     
     let allAssets = [];
-    let offset = 0;
+    let continuation = null;
     let limit = 100;
     let hasMore = true;
     let totalRequests = 0;
 
     while (hasMore) {
       try {
-        const data = await this.makeRequest({
-          offset: offset.toString(),
+        const params = {
           limit: limit.toString()
-        });
+        };
         
-        if (data && data.tokens && data.tokens.length > 0) {
-          allAssets = allAssets.concat(data.tokens);
-          console.log(`Fetched offset ${offset}: ${data.tokens.length} assets (Total: ${allAssets.length})`);
+        // Use continuation token for pagination if available, otherwise use offset
+        if (continuation) {
+          params.continuation = continuation;
+        } else if (totalRequests === 0) {
+          // First request - no continuation needed
+        }
+        
+        const data = await this.makeRequest(params);
+        
+        // New API returns { assets: [...], continuation: "..." }
+        const assets = data && data.assets && Array.isArray(data.assets) ? data.assets : [];
+        
+        if (assets.length > 0) {
+          allAssets = allAssets.concat(assets);
+          console.log(`Fetched page ${totalRequests + 1}: ${assets.length} assets (Total: ${allAssets.length})`);
           
-          // Check if there are more assets
-          hasMore = data.tokens.length === limit;
-          offset += limit;
+          // Check if there are more assets using continuation token
+          continuation = data.continuation || null;
+          hasMore = !!continuation && assets.length === limit;
           totalRequests++;
         } else {
           hasMore = false;
@@ -139,7 +158,7 @@ class MagicEdenRarityFetcher {
     
     return assets.map((tokenData, index) => {
       const asset = tokenData.asset;
-      const market = tokenData.market;
+      const floorAsk = tokenData.floorAsk;
       
       // Extract rarity information
       const rarityRank = asset.rarity && asset.rarity[0] ? asset.rarity[0].rank : null;
@@ -149,11 +168,13 @@ class MagicEdenRarityFetcher {
       const attributes = asset.attributes || [];
       const attributesJson = JSON.stringify(attributes);
       
-      // Extract market information
-      const marketPrice = market?.floorAsk?.priceV2?.amount?.native || null;
-      const currency = market?.floorAsk?.priceV2?.currency?.symbol || 'SEI';
-      const lastSalePrice = market?.lastSalePrice?.amount?.native || null;
-      const lastSaleCurrency = market?.lastSalePrice?.currency?.symbol || 'SEI';
+      // Extract market information (new API structure)
+      const marketPrice = floorAsk?.price?.amount?.native || null;
+      const currency = floorAsk?.price?.currency?.symbol || (asset.lastSalePrice?.currency?.symbol) || 'ETH';
+      
+      // Last sale price is directly on asset in new API
+      const lastSalePrice = asset.lastSalePrice?.amount?.native || null;
+      const lastSaleCurrency = asset.lastSalePrice?.currency?.symbol || 'ETH';
 
       return {
         tokenId: asset.tokenId || index + 1,

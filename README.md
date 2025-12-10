@@ -135,14 +135,16 @@ For detailed logging, you can modify the script to add more console output or us
 ## API Reference
 
 This tool uses the Magic Eden EVM API v4:
-- Endpoint: `https://api-mainnet.magiceden.dev/v4/assets`
+- Endpoint: `https://api-mainnet.magiceden.dev/v4/evm-public/assets/collection-assets`
 - Docs: [Magic Eden v4 Get Assets](https://docs.magiceden.io/v4.0/reference/getassets)
 
 Example query shape used by the tool:
-- `chain`: EVM chain, e.g. `sei`
+- `chain`: EVM chain, e.g. `ethereum`, `sei`
 - `collectionId`: collection contract address
-- `includeMarket`: `true`
-- `offset`, `limit`: pagination controls
+- `limit`: number of results per page (default: 100)
+- `offset`: pagination offset (default: 0)
+- `sortBy`: sort field (default: 'price')
+- `sortDir`: sort direction (default: 'asc')
 
 ## License
 
