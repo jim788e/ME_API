@@ -1,14 +1,16 @@
+require('dotenv').config();
 const { ethers } = require('ethers');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const path = require('path');
 
 // Configuration
-const RPC_URL = 'https://evm-rpc.sei-apis.com';
-const CONTRACT_ADDRESS = '0x972170dCF963E1Dc7Bdd7BDf85A3Abb35Fb4F15d';
-const OUTPUT_DIR = './output';
+const RPC_URL = process.env.RPC_URL || 'https://evm-rpc.sei-apis.com';
+// Use CONTRACT_ADDRESS if available, otherwise fallback to COLLECTION_ADDRESS (from index.js config)
+const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || process.env.COLLECTION_ADDRESS || '0x972170dCF963E1Dc7Bdd7BDf85A3Abb35Fb4F15d';
+const OUTPUT_DIR = process.env.OUTPUT_DIR || './output';
 const OUTPUT_FILENAME = 'sei_snapshot.csv';
-const BATCH_SIZE = 5; // Increased batch size for new RPC
-const DELAY_BETWEEN_BATCHES_MS = 1000; // 1s delay (approx 5 req/s)
+const BATCH_SIZE = parseInt(process.env.BATCH_SIZE) || 5;
+const DELAY_BETWEEN_BATCHES_MS = parseInt(process.env.DELAY_MS) || 1000;
 
 // Minimal ABI for ERC721Enumerable
 const ABI = [
