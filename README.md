@@ -77,6 +77,22 @@ npm start
 npm run dev
 ```
 
+## On-Chain Snapshot Tool (Sei)
+
+In addition to the API fetcher, this repo includes a direct on-chain snapshot tool for Sei network. This interacts directly with the smart contract to fetch the "Source of Truth" for token ownership.
+
+### Usage
+```bash
+node sei_snapshot.js
+```
+
+### Configuration (sei_snapshot.js)
+You can directly edit the `sei_snapshot.js` file to change:
+- `RPC_URL`: The RPC endpoint to use
+- `CONTRACT_ADDRESS`: The NFT contract address
+- `BATCH_SIZE`: Number of tokens to fetch in parallel (Adjust based on rate limits)
+- `DELAY_BETWEEN_BATCHES_MS`: Delay between requests
+
 ## Output
 
 The tool generates a CSV file with the following columns:
